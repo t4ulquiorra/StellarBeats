@@ -23,94 +23,59 @@ internal object InnertubeParser {
             ?.firstOrNull()
             ?.walkPath("tabRenderer", "content", "sectionListRenderer", "contents")
             ?: return HomeResult(emptyList(), null)
-
         val sections = contents.mapNotNull { sectionEl ->
             val section = sectionEl.jsonObject
-                ?.get("itemSectionRenderer")
-                ?.jsonObject
-                ?.get("contents")
-                ?.jsonArray
-                ?.firstOrNull()
-                ?.jsonObject
-                ?.get("musicCarouselShelfRenderer")
-                ?.jsonObject
+                ?.get("itemSectionRenderer")?.jsonObject
+                ?.get("contents")?.jsonArray
+                ?.firstOrNull()?.jsonObject
+                ?.get("musicCarouselShelfRenderer")?.jsonObject
                 ?: return@mapNotNull null
-
-            val title = section.getText("header", "musicCarouselShelfBasicHeaderRenderer", "title")
-                ?: return@mapNotNull null
-
+            val title = section.getText("header", "musicCarouselShelfBasicHeaderRenderer", "title") ?: return@mapNotNull null
             val items = section.getArray("contents")
                 ?.mapNotNull { it.jsonObject?.let { obj -> parseSearchItem(obj) } }
                 ?: emptyList()
-
-            val continuation = section
-                .walkPath("continuations")
-                ?.firstOrNull()
-                ?.walkPath("nextContinuationData", "continuation")
-                ?.jsonPrimitive?.content
-
+            val continuation = section.walkPath("continuations")?.firstOrNull()
+                ?.walkPath("nextContinuationData", "continuation")?.jsonPrimitive?.content
             HomeSection(title, items, null, continuation)
         }
-
-        val mainContinuation = raw
-            .walkPath("continuations")
-            ?.firstOrNull()
-            ?.walkPath("nextContinuationData", "continuation")
-            ?.jsonPrimitive?.content
-
+        val mainContinuation = raw.walkPath("continuations")?.firstOrNull()
+            ?.walkPath("nextContinuationData", "continuation")?.jsonPrimitive?.content
         return HomeResult(sections, mainContinuation)
     }
 
     fun parseSearch(raw: JsonElement): SearchResult {
-        val contents = raw
-            .walkPath("contents", "sectionListRenderer", "contents")
+        val contents = raw.walkPath("contents", "sectionListRenderer", "contents")
             ?: return SearchResult(emptyList(), null)
-
         val items = contents.flatMap { sectionEl ->
-            sectionEl.jsonObject
-                ?.get("itemSectionRenderer")
-                ?.jsonObject
-                ?.get("contents")
-                ?.jsonArray
-                ?.mapNotNull { it.jsonObject?.let { obj -> parseSearchItem(obj) } }
+            sectionEl.jsonObject?.get("itemSectionRenderer")?.jsonObject
+                ?.get("contents")?.jsonArray
+                ?.mapNotNull { it.jsonObject?.let { parseSearchItem(it) } }
                 ?: emptyList()
         }
-
-        val continuation = raw
-            .walkPath("continuations")
-            ?.firstOrNull()
-            ?.walkPath("nextContinuationData", "continuation")
-            ?.jsonPrimitive?.content
-
+        val continuation = raw.walkPath("continuations")?.firstOrNull()
+            ?.walkPath("nextContinuationData", "continuation")?.jsonPrimitive?.content
         return SearchResult(items, continuation)
     }
 
     fun parsePlayer(raw: JsonElement): PlayerResponse {
         val playability = raw.walkPath("playabilityStatus")?.jsonObject
             ?: throw PlayabilityException("UNKNOWN", "Missing playability status")
-
         val status = playability["status"]?.jsonPrimitive?.content ?: "UNKNOWN"
         if (status != "OK") {
             val reason = playability.getText("reason") ?: "Unknown error"
             throw PlayabilityException(status, reason)
         }
-
         val videoDetails = raw.walkPath("videoDetails")?.jsonObject
             ?: throw InnertubeException("Missing videoDetails")
-
         val videoId = videoDetails["videoId"]?.jsonPrimitive?.content
             ?: throw InnertubeException("Missing videoId")
-
         val streamingData = raw.walkPath("streamingData")?.jsonObject
         val streams = extractAudioStreams(streamingData)
         if (streams.isEmpty()) {
             throw StreamException("No audio streams found for $videoId")
         }
-
-        val thumbnail = videoDetails
-            .walkPath("thumbnail", "thumbnails")
-            ?.jsonArray
-            ?.maxByOrNull { it.jsonObject?.get("width")?.jsonPrimitive?.intOrNull ?: 0 }
+        val thumbnail = videoDetails.walkPath("thumbnail", "thumbnails")
+            ?.jsonArray?.maxByOrNull { it.jsonObject?.get("width")?.jsonPrimitive?.intOrNull ?: 0 }
             ?.jsonObject?.let {
                 Thumbnail(
                     url = it["url"]?.jsonPrimitive?.content ?: "",
@@ -118,29 +83,19 @@ internal object InnertubeParser {
                     height = it["height"]?.jsonPrimitive?.intOrNull ?: 0,
                 )
             }
-
         val lyricsEndpoint = raw.walkPath("captions", "playerCaptionsTracklistRenderer", "captionTracks")
-            ?.jsonArray?.firstOrNull()?.jsonObject
-            ?.let { cap ->
-                NavigationEndpoint(
-                    type = ContentType.UNKNOWN,
-                    watchEndpointTimedTextTrackId = cap["baseUrl"]?.jsonPrimitive?.content,
-                )
+            ?.jsonArray?.firstOrNull()?.jsonObject?.let { cap ->
+                NavigationEndpoint(type = ContentType.UNKNOWN, watchEndpointTimedTextTrackId = cap["baseUrl"]?.jsonPrimitive?.content)
             }
-
         return PlayerResponse(
             videoId = videoId,
             title = videoDetails.getText("title") ?: "Unknown",
             artist = videoDetails.getText("author") ?: "Unknown",
             artistEndpoint = videoDetails.walkPath("channelId")
                 ?.jsonPrimitive?.content?.let { NavigationEndpoint(ContentType.ARTIST, browseId = it) },
-            album = null,
-            albumEndpoint = null,
-            thumbnail = thumbnail,
+            album = null, albumEndpoint = null, thumbnail = thumbnail,
             durationSeconds = videoDetails["lengthSeconds"]?.jsonPrimitive?.intOrNull ?: 0,
-            streams = streams,
-            lyricsEndpoint = lyricsEndpoint,
-            relatedEndpoint = null,
+            streams = streams, lyricsEndpoint = lyricsEndpoint, relatedEndpoint = null,
         )
     }
 
@@ -148,28 +103,18 @@ internal object InnertubeParser {
         val tabs = raw.walkPath("contents", "twoColumnBrowseResultsRenderer", "tabs")
             ?: raw.walkPath("contents", "singleColumnBrowseResultsRenderer", "tabs")
             ?: return BrowseResult(null, emptyList(), null)
-
-        val tabContent = tabs.firstNotNullOfOrNull { tab ->
-            tab.walkPath("tabRenderer", "content")
-        } ?: return BrowseResult(null, emptyList(), null)
-
-        val header = tabContent.walkPath("sectionListRenderer", "header")
-            ?.let { parseSectionHeader(it) }
-
+        val tabContent = tabs.firstNotNullOfOrNull { tab -> tab.walkPath("tabRenderer", "content") }
+            ?: return BrowseResult(null, emptyList(), null)
+        val header = tabContent.walkPath("sectionListRenderer", "header")?.let { parseSectionHeader(it) }
         val sectionContents = tabContent.walkPath("sectionListRenderer", "contents")
             ?: tabContent.walkPath("playlistVideoListRenderer", "contents")
-
         val items = sectionContents?.mapNotNull { el ->
-            el.jsonObject?.let { obj ->
-                parseBrowseItem(obj) ?: parseSearchItem(obj)?.toBrowseItem()
-            }
+            el.jsonObject?.let { obj -> parseBrowseItem(obj) ?: parseSearchItem(obj)?.toBrowseItem() }
         } ?: emptyList()
-
         val continuation = raw.walkPath("continuations")
             ?.firstOrNull()?.walkPath("nextContinuationData", "continuation")?.jsonPrimitive?.content
             ?: tabContent.walkPath("playlistVideoListRenderer", "continuations")
                 ?.firstOrNull()?.walkPath("nextContinuationData", "continuation")?.jsonPrimitive?.content
-
         return BrowseResult(header, items, continuation)
     }
 
@@ -177,29 +122,23 @@ internal object InnertubeParser {
         val tabContent = raw
             .walkPath("contents", "singleColumnMusicWatchNextResultsRenderer", "tabbedRenderer", "tabs")
             ?.firstOrNull()?.walkPath("tabRenderer", "content")
-
         val queueItems = tabContent
             ?.walkPath("musicQueueRenderer", "content", "playlistPanelRenderer", "contents")
             ?: emptyList()
-
         val items = queueItems.mapNotNull { el ->
             el.jsonObject?.get("playlistPanelVideoRenderer")?.jsonObject?.let { parseQueueSong(it) }
         }
-
         val autoplay = raw
             .walkPath("contents", "singleColumnMusicWatchNextResultsRenderer", "autoplay", "autoplayRenderer")
             ?.walkPath("contents")?.firstOrNull()
             ?.walkPath("autoplayVideoRenderer", "videoId")?.jsonPrimitive?.content
-
         val continuation = tabContent
             ?.walkPath("musicQueueRenderer", "content", "playlistPanelRenderer", "continuations")
             ?.firstOrNull()?.walkPath("nextContinuationData", "continuation")?.jsonPrimitive?.content
-
         val lyricsEndpoint = raw
             .walkPath("contents", "singleColumnMusicWatchNextResultsRenderer", "tabbedRenderer", "tabs")
             ?.getOrNull(1)?.walkPath("tabRenderer", "endpoint")
             ?.let { parseNavigationEndpoint(it) }
-
         return NextResult(items, autoplay, continuation, lyricsEndpoint)
     }
 
@@ -208,7 +147,6 @@ internal object InnertubeParser {
             .walkPath("contents", "singleColumnBrowseResultsRenderer", "tabs")
             ?.firstOrNull()?.walkPath("tabRenderer", "content", "sectionListRenderer", "contents")
             ?: return emptyList()
-
         return categories.flatMap { sectionEl ->
             sectionEl.jsonObject?.get("itemSectionRenderer")?.jsonObject
                 ?.get("contents")?.jsonArray ?: emptyList()
@@ -267,7 +205,6 @@ internal object InnertubeParser {
     }
 
     private fun decryptSignature(encrypted: String): String? = null
-
     private fun transformNParam(url: String): String = url
 
     private fun parseSearchItem(obj: JsonObject): SearchItem? {
@@ -420,7 +357,8 @@ internal object InnertubeParser {
         }
         current.jsonObject?.get("simpleText")?.jsonPrimitive?.content?.let { return it }
         return current.jsonObject?.get("runs")?.jsonArray
-            ?.mapNotNull { it.jsonObject?.get("text")?.jsonPrimitive?.content }?.joinToString("")
+            ?.mapNotNull { it.jsonObject?.get("text")?.jsonPrimitive?.content }
+            .joinToString("")
     }
 
     private fun JsonObject.getFlexColumnItem(index: Int): JsonObject? {
@@ -455,7 +393,7 @@ internal object InnertubeParser {
     }
 
     private fun parseYear(text: String?): Int? {
-        return text?.split(" • ", ", ")?.mapNotNull { it.trim().toIntOrNull() }?.firstOrNull()
+        return text?.split(" • ", ", ", ")?.mapNotNull { it.trim().toIntOrNull() }?.firstOrNull()
     }
 
     private fun parseSongCount(text: String?): Int? {
@@ -479,7 +417,7 @@ internal object InnertubeParser {
         is SearchItem.Artist -> BrowseItem.Artist(id = id, title = title, thumbnail = thumbnail,
             endpoint = endpoint, subtitle = subtitle)
         is SearchItem.Playlist -> BrowseItem.Playlist(id = id, title = title, thumbnail = thumbnail,
-            endpoint = endpoint, subtitle = subtitle, songCount = songCount)
+            endpoint = endpoint, songCount = songCount)
         is SearchItem.Unknown -> BrowseItem.Unknown(id = id, title = title, thumbnail = thumbnail,
             endpoint = endpoint, subtitle = subtitle)
     }
