@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">meloapi.vercel.app</domain>
+        <domain includeSubdomains="true">lrclib.net</domain>
+        <domain includeSubdomains="true">youtubei.googleapis.com</domain>
+        <domain includeSubdomains="true">music.youtube.com</domain>
+        <domain includeSubdomains="true">googlevideo.com</domain>
+    </domain-config>
+</network-security-config>
