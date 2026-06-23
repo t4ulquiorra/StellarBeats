@@ -107,5 +107,5 @@ dependencies {
     "gmsImplementation"(libs.play.services.cast.framework)
 
     // Debug
-    debugImplementation(libs.compose.ui.tooling)
+    debugImplementation("androidx.compose.ui:ui-tooling")
 }
