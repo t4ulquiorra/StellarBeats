@@ -117,20 +117,24 @@ class PlayerViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
-                // Search for a song on JioSaavn
-                val searchResult = com.stellarbeats.jiosaavn.JioSaavnClient.search("Believer")
+                // Search for a song on YouTube Music
+                val searchResult = com.stellarbeats.innertube.Innertube.search("Believer Imagine Dragons")
                 
                 // If the network call failed, get the actual exception message
                 if (searchResult.isFailure) {
                     val cause = searchResult.exceptionOrNull()
-                    throw Exception("Network failed: ${cause?.message ?: "Unknown network error"}")
+                    throw Exception("YT Network failed: ${cause?.message ?: "Unknown network error"}")
                 }
                 
-                val parsedSong = searchResult.getOrNull()?.songs?.firstOrNull()
-                    ?: throw Exception("JioSaavn returned no songs for this search")
+                val ytSong = searchResult.getOrNull()?.items?.firstOrNull()
+                    ?: throw Exception("YouTube returned no songs for this search")
                 
                 // Convert it to our local database model
-                val track = with(repository) { parsedSong.toLocalTrack() }
+                val track = with(repository) { 
+                    // We cast it to SearchItem.Song to access the toLocalTrack mapping
+                    (ytSong as? com.stellarbeats.innertube.SearchItem.Song)?.toLocalTrack() 
+                        ?: throw Exception("Failed to parse YouTube song")
+                }
                 
                 // Start playback!
                 play(track)
@@ -140,7 +144,7 @@ class PlayerViewModel @Inject constructor(
             }
         }
     }
-
+    
     fun playPause() { if (player.isPlaying) player.pause() else player.play() }
     fun next() { if (player.hasNextMediaItem()) player.seekToNextMediaItem() }
     fun previous() { if (player.currentPosition > 3000) player.seekTo(0) else if (player.hasPreviousMediaItem()) player.seekToPreviousMediaItem() }
