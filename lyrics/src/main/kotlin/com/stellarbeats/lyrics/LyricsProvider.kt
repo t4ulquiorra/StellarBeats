@@ -527,7 +527,7 @@ internal object LrcParser {
                     "by" -> metadataBuilder.by = value
                     "offset" -> metadataBuilder.offset = value.toLongOrNull() ?: 0
                 }
-                return@let // Skip metadata lines from lyric output
+                continue // Skip metadata lines from lyric output
             }
 
             // Extract all timestamps from this line

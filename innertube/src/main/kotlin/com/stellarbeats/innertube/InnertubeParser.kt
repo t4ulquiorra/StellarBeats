@@ -27,9 +27,9 @@ internal object InnertubeParser {
         val sections = contents.mapNotNull { sectionEl ->
             val section = sectionEl.jsonObject
                 .get("itemSectionRenderer")?.jsonObject
-                .get("contents")?.jsonArray
-                .firstOrNull()?.jsonObject
-                .get("musicCarouselShelfRenderer")?.jsonObject
+                ?.get("contents")?.jsonArray
+                ?.firstOrNull()?.jsonObject
+                ?.get("musicCarouselShelfRenderer")?.jsonObject
                 ?: return@mapNotNull null
             val title = section.getText("header", "musicCarouselShelfBasicHeaderRenderer", "title") ?: return@mapNotNull null
             val items = section.get("contents")?.jsonArray
