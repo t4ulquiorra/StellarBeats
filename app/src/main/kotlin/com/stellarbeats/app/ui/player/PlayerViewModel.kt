@@ -6,12 +6,16 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import android.content.Context
+import android.content.Intent
 import com.stellarbeats.app.di.PlayerExo
 import com.stellarbeats.app.repository.MusicRepository
+import com.stellarbeats.app.playback.MusicService
 import com.stellarbeats.database.entities.LocalTrack
 import com.stellarbeats.lyrics.Lyrics
 import com.stellarbeats.lyrics.LyricsProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -42,6 +46,7 @@ data class PlayerUiState(
 
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
+	@ApplicationContext private val context: Context,
     @PlayerExo private val player: ExoPlayer,
     private val repository: MusicRepository,
 ) : ViewModel() {
@@ -84,6 +89,10 @@ class PlayerViewModel @Inject constructor(
 
     fun play(track: LocalTrack, queue: List<LocalTrack> = listOf(track), index: Int = 0) {
         viewModelScope.launch {
+			// Foreground Service
+			val intent = Intent(context, MusicService::class.java)
+            context.startForegroundService(intent)
+        
             _uiState.value = _uiState.value.copy(isLoading = true, error = null, queue = queue, queueIndex = index)
             try {
                 repository.trackDao.insert(track)
