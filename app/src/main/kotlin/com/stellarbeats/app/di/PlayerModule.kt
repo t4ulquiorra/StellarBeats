@@ -33,6 +33,7 @@ object PlayerModule {
 
     @Provides
     @Singleton
+    @PlayerExo
     fun provideExoPlayer(
         @ApplicationContext context: Context,
         dataSourceFactory: DefaultDataSource.Factory
