@@ -117,10 +117,17 @@ class PlayerViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
-                // Search for a song on JioSaavn to guarantee a valid, streamable track
-                val searchResult = com.stellarbeats.jiosaavn.JioSaavnClient.search("Believer").getOrNull()
-                val parsedSong = searchResult?.songs?.firstOrNull()
-                    ?: throw Exception("Failed to fetch song from JioSaavn")
+                // Search for a song on JioSaavn
+                val searchResult = com.stellarbeats.jiosaavn.JioSaavnClient.search("Believer")
+                
+                // If the network call failed, get the actual exception message
+                if (searchResult.isFailure) {
+                    val cause = searchResult.exceptionOrNull()
+                    throw Exception("Network failed: ${cause?.message ?: "Unknown network error"}")
+                }
+                
+                val parsedSong = searchResult.getOrNull()?.songs?.firstOrNull()
+                    ?: throw Exception("JioSaavn returned no songs for this search")
                 
                 // Convert it to our local database model
                 val track = with(repository) { parsedSong.toLocalTrack() }
