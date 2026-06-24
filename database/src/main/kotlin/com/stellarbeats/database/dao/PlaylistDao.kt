@@ -171,7 +171,6 @@ interface PlaylistDao {
     @Query("""
         UPDATE playlist_entries SET position = position - 1
         WHERE playlist_id = :playlistId AND position > -1
-        ORDER BY position ASC
     """)
     suspend fun shiftPositionsUp(playlistId: String)
 

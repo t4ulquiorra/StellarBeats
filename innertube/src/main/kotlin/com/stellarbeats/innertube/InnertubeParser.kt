@@ -8,6 +8,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.intOrNull
 
 internal object InnertubeParser {
 
@@ -145,8 +146,8 @@ internal object InnertubeParser {
     fun parseMoodPlaylists(raw: JsonElement): List<MoodPlaylist> {
         val categories = raw
             .walkPath("contents", "singleColumnBrowseResultsRenderer", "tabs")
-            ?.firstOrNull()?.walkPath("tabRenderer", "content", "sectionListRenderer", "contents")
-            ?: return emptyList()
+            ?.jsonArray?.firstOrNull()?.walkPath("tabRenderer", "content", "sectionListRenderer", "contents")
+            ?.jsonArray ?: return emptyList()
         return categories.flatMap { sectionEl ->
             sectionEl.jsonObject?.get("itemSectionRenderer")?.jsonObject
                 ?.get("contents")?.jsonArray ?: emptyList()
@@ -393,11 +394,12 @@ internal object InnertubeParser {
     }
 
     private fun parseYear(text: String?): Int? {
-        return text?.split(" • ", ", ", ")?.mapNotNull { it.trim().toIntOrNull() }?.firstOrNull()
+        return text?.split(" • ", ", ")?.mapNotNull { it.trim().toIntOrNull() }?.firstOrNull()
     }
 
     private fun parseSongCount(text: String?): Int? {
-        return text?.Regex("(\\d+)\\s*songs?")?.find()?.groupValues?.get(1)?.toIntOrNull()
+        if (text == null) return null
+        return Regex("(\\d+)\\s*songs?").find(text)?.groupValues?.get(1)?.toIntOrNull()
     }
 
     private fun JsonElement.walkPath(vararg keys: String): JsonElement? {
@@ -409,15 +411,15 @@ internal object InnertubeParser {
     }
 
     private fun SearchItem.toBrowseItem(): BrowseItem = when (this) {
-        is SearchItem.Song -> BrowseItem.Song(id = videoId, title = title, thumbnail = thumbnail,
+        is SearchItem.Song -> BrowseItem.Song(id = id, title = title, thumbnail = thumbnail,
             endpoint = endpoint, subtitle = subtitle, artists = artists, album = album,
-            duration = duration, videoId = videoId)
+            duration = duration, videoId = id)
         is SearchItem.Album -> BrowseItem.Album(id = id, title = title, thumbnail = thumbnail,
             endpoint = endpoint, subtitle = subtitle, year = year, artists = artists)
         is SearchItem.Artist -> BrowseItem.Artist(id = id, title = title, thumbnail = thumbnail,
             endpoint = endpoint, subtitle = subtitle)
         is SearchItem.Playlist -> BrowseItem.Playlist(id = id, title = title, thumbnail = thumbnail,
-            endpoint = endpoint, songCount = songCount)
+            endpoint = endpoint, subtitle = subtitle, songCount = songCount)
         is SearchItem.Unknown -> BrowseItem.Unknown(id = id, title = title, thumbnail = thumbnail,
             endpoint = endpoint, subtitle = subtitle)
     }
