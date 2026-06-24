@@ -68,6 +68,7 @@ class MusicRepository(
                     song.streamUrl ?: throw Exception("No stream URL from JioSaavn")
                 }
             }
+            "direct" -> track.jsStreamUrl ?: throw Exception("Missing direct URL")
             else -> throw Exception("Unknown source: ${track.source}")
         }
     }

@@ -113,28 +113,31 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
-    fun playTestTrack() {
+        fun playTestTrack() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
-                // Search for a song on YouTube Music
-                val searchResult = com.stellarbeats.innertube.Innertube.search("Believer Imagine Dragons")
-                
-                // If the network call failed, get the actual exception message
-                if (searchResult.isFailure) {
-                    val cause = searchResult.exceptionOrNull()
-                    throw Exception("YT Network failed: ${cause?.message ?: "Unknown network error"}")
-                }
-                
-                val ytSong = searchResult.getOrNull()?.items?.firstOrNull()
-                    ?: throw Exception("YouTube returned no songs for this search")
-                
-                // Convert it to our local database model
-                val track = with(repository) { 
-                    // We cast it to SearchItem.Song to access the toLocalTrack mapping
-                    (ytSong as? com.stellarbeats.innertube.SearchItem.Song)?.toLocalTrack() 
-                        ?: throw Exception("Failed to parse YouTube song")
-                }
+                // Create a dummy track with a direct, public MP3 URL
+                val track = LocalTrack(
+                    trackId = "test:mp3",
+                    title = "SoundHelix Song 1 (Direct Test)",
+                    artistsJson = """[{"name":"T. Schürger","id":null}]""",
+                    album = "Test Album",
+                    albumId = null,
+                    durationMs = 371000,
+                    year = 2024,
+                    language = null,
+                    thumbnailUrl = null,
+                    dominantColor = null,
+                    source = "direct",
+                    sourceId = "test:mp3",
+                    jsStreamUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+                    jsStreamQuality = "128kbps",
+                    explicit = false,
+                    hasLyrics = false,
+                    lyricsId = null,
+                    playCount = 0L,
+                )
                 
                 // Start playback!
                 play(track)
