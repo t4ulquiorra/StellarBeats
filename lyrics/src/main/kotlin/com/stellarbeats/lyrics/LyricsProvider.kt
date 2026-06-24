@@ -517,9 +517,10 @@ internal object LrcParser {
             if (trimmed.isBlank()) continue
 
             // Check for metadata tag
-            META_TAG_REGEX.find(trimmed)?.let { match ->
-                val key = match.groupValues[1].lowercase()
-                val value = match.groupValues[2].trim()
+            val metaMatch = META_TAG_REGEX.find(trimmed)
+            if (metaMatch != null) {
+                val key = metaMatch.groupValues[1].lowercase()
+                val value = metaMatch.groupValues[2].trim()
                 when (key) {
                     "ti" -> metadataBuilder.title = value
                     "ar" -> metadataBuilder.artist = value
