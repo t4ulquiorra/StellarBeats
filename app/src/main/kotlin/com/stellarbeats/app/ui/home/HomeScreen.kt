@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -31,6 +32,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.stellarbeats.app.repository.HomeSection
+import com.stellarbeats.app.ui.player.PlayerViewModel
 import com.stellarbeats.database.entities.LocalTrack
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
@@ -40,6 +42,8 @@ import kotlinx.serialization.json.jsonPrimitive
 @Composable
 fun HomeScreen(onTrackClick: (LocalTrack) -> Unit, viewModel: HomeViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val playerViewModel: PlayerViewModel = hiltViewModel()
+    
     when {
         state.isLoading -> {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -59,6 +63,15 @@ fun HomeScreen(onTrackClick: (LocalTrack) -> Unit, viewModel: HomeViewModel = hi
             LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(vertical = 16.dp)) {
                 item {
                     Text(text = "Good evening", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(horizontal = 24.dp), color = MaterialTheme.colorScheme.onSurface)
+                    Spacer(Modifier.height(24.dp))
+                    
+                    // JioSaavn Test Button
+                    Button(
+                        onClick = { playerViewModel.playTestTrack() },
+                        modifier = Modifier.padding(horizontal = 24.dp)
+                    ) {
+                        Text("Play JioSaavn Test Track")
+                    }
                     Spacer(Modifier.height(24.dp))
                 }
                 items(state.sections) { section ->

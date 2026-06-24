@@ -46,7 +46,7 @@ data class PlayerUiState(
 
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
-	@ApplicationContext private val context: Context,
+    @ApplicationContext private val context: Context,
     @PlayerExo private val player: ExoPlayer,
     private val repository: MusicRepository,
 ) : ViewModel() {
@@ -89,8 +89,8 @@ class PlayerViewModel @Inject constructor(
 
     fun play(track: LocalTrack, queue: List<LocalTrack> = listOf(track), index: Int = 0) {
         viewModelScope.launch {
-			// Foreground Service
-			val intent = Intent(context, MusicService::class.java)
+            // Foreground Service
+            val intent = Intent(context, MusicService::class.java)
             context.startForegroundService(intent)
         
             _uiState.value = _uiState.value.copy(isLoading = true, error = null, queue = queue, queueIndex = index)
@@ -109,6 +109,27 @@ class PlayerViewModel @Inject constructor(
                 startProgressUpdates()
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Playback failed")
+            }
+        }
+    }
+
+    fun playTestTrack() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            try {
+                // Search for a song on JioSaavn to guarantee a valid, streamable track
+                val searchResult = com.stellarbeats.jiosaavn.JioSaavnClient.search("Believer").getOrNull()
+                val parsedSong = searchResult?.songs?.firstOrNull()
+                    ?: throw Exception("Failed to fetch song from JioSaavn")
+                
+                // Convert it to our local database model
+                val track = with(repository) { parsedSong.toLocalTrack() }
+                
+                // Start playback!
+                play(track)
+                expandSheet()
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isLoading = false, error = "Test failed: ${e.message}")
             }
         }
     }

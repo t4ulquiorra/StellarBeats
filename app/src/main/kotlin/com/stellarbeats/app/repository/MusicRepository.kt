@@ -138,7 +138,7 @@ class MusicRepository(
         )
     }
 
-    private fun ParsedSong.toLocalTrack(): LocalTrack {
+    internal fun ParsedSong.toLocalTrack(): LocalTrack {
         val trackId = "js:$id"
         return LocalTrack(
             trackId = trackId,
