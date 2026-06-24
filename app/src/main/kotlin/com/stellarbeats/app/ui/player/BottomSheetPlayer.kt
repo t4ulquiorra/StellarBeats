@@ -26,9 +26,9 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronDown
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -71,7 +71,7 @@ fun BottomSheetPlayer(viewModel: PlayerViewModel = hiltViewModel()) {
         sheetOffset.animateTo(
             targetValue = if (sheetExpanded) 0f else 1f,
             animationSpec = androidx.compose.animation.core.spring(
-                stiffness = 300,
+                stiffness = 300f,
                 dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy
             ),
         )
@@ -156,11 +156,15 @@ private fun FullPlayer(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(), horizontal = 24.dp),
+            .padding(
+                top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
+                start = 24.dp,
+                end = 24.dp
+            ),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onCollapse) { Icon(Icons.Default.ChevronDown, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface) }
+            IconButton(onClick = onCollapse) { Icon(Icons.Default.KeyboardArrowDown, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface) }
             Text(text = "Now Playing", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             IconButton(onClick = { }) { Icon(Icons.Default.MoreVert, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface) }
         }

@@ -115,9 +115,9 @@ class MusicRepository(
     suspend fun clearSearchHistory() = searchHistoryDao.clearAll()
 
     private fun SearchItem.Song.toLocalTrack(): LocalTrack {
-        val id = "yt:$videoId"
+        val trackId = "yt:$id"
         return LocalTrack(
-            trackId = id,
+            trackId = trackId,
             title = title,
             artistsJson = json.encodeToString(artists.map { ArtistRef(it.title, it.id) }),
             album = album?.title,
@@ -128,20 +128,20 @@ class MusicRepository(
             thumbnailUrl = thumbnail?.url,
             dominantColor = null,
             source = "youtube",
-            sourceId = videoId,
+            sourceId = id,
             jsStreamUrl = null,
             jsStreamQuality = null,
             explicit = false,
             hasLyrics = false,
             lyricsId = null,
-            playCount = 0,
+            playCount = 0L,
         )
     }
 
     private fun ParsedSong.toLocalTrack(): LocalTrack {
-        val id = "js:$id"
+        val trackId = "js:$id"
         return LocalTrack(
-            trackId = id,
+            trackId = trackId,
             title = title,
             artistsJson = json.encodeToString(artists),
             album = album,
@@ -158,7 +158,7 @@ class MusicRepository(
             explicit = explicit,
             hasLyrics = hasLyrics,
             lyricsId = lyricsId,
-            playCount = playCount?.toInt() ?: 0,
+            playCount = playCount ?: 0L,
         )
     }
 }

@@ -12,6 +12,7 @@ import com.stellarbeats.database.entities.LocalTrack
 import com.stellarbeats.lyrics.Lyrics
 import com.stellarbeats.lyrics.LyricsProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -19,7 +20,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 data class PlayerUiState(
     val currentTrack: LocalTrack? = null,
@@ -135,8 +139,9 @@ class PlayerViewModel @Inject constructor(
     private fun fetchLyrics(track: LocalTrack) {
         lyricsJob?.cancel()
         lyricsJob = viewModelScope.launch(Dispatchers.IO) {
-            val jsLyrics = if (track.source == "jiosaavn" && track.hasLyrics && track.lyricsId != null) {
-                com.stellarbeats.jiosaavn.JioSaavnClient.lyrics(track.lyricsId).getOrNull()
+            val lyricsId = track.lyricsId
+            val jsLyrics = if (track.source == "jiosaavn" && track.hasLyrics && lyricsId != null) {
+                com.stellarbeats.jiosaavn.JioSaavnClient.lyrics(lyricsId).getOrNull()
             } else null
             val lyrics = LyricsProvider.fetch(
                 title = track.title,
@@ -158,7 +163,7 @@ class PlayerViewModel @Inject constructor(
     companion object {
         private fun String.parseFirstArtistName(): String {
             return try {
-                val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+                val json = Json { ignoreUnknownKeys = true }
                 val arr = json.parseToJsonElement(this).jsonArray
                 arr.firstOrNull()?.jsonObject?.get("name")?.jsonPrimitive?.content ?: ""
             } catch (_: Exception) { "" }
