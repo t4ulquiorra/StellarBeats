@@ -270,7 +270,7 @@ open class JioSaavnException(message: String, cause: Throwable? = null) : Except
 
 class JioSaavnApiException(
     val statusCode: Int,
-    val message: String,
+    override val message: String,
 ) : JioSaavnException("API error $statusCode: $message")
 
 class JioSaavnParseException(message: String, cause: Throwable? = null) : JioSaavnException(message, cause)

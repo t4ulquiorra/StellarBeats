@@ -6,7 +6,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import kotlinx.serialization.json.putJsonElement
+import kotlinx.serialization.json.jsonObject
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -49,20 +49,20 @@ object Innertube {
 
     private suspend fun post(endpoint: String, additionalParams: Map<String, Any?> = emptyMap()): JsonObject = withContext(Dispatchers.IO) {
         val body = buildJsonObject {
-            putJsonElement("context", json.encodeToJsonElement(InnertubeContext.serializer(), context))
+            put("context", json.encodeToJsonElement(InnertubeContext.serializer(), context))
             additionalParams.forEach { (key, value) ->
                 when (value) {
                     is String -> put(key, value)
                     is Number -> put(key, value)
                     is Boolean -> put(key, value)
                     null -> {}
-                    else -> putJsonElement(key, json.encodeToJsonElement(value))
+                    else -> put(key, json.encodeToJsonElement(JsonObject.serializer(), value as JsonObject))
                 }
             }
         }
         val request = Request.Builder()
             .url("$BASE_URL$endpoint?key=$CLIENT_KEY")
-            .post(body.toString().toMediaType("application/json".toMediaType()))
+            .post(body.toString().toRequestBody("application/json".toMediaType()))
             .build()
         val response = client.newCall(request).execute()
         if (!response.isSuccessful) {
@@ -77,14 +77,14 @@ object Innertube {
         parsed
     }
 
-    suspend fun home(): Result<HomeResult> = runCatching { InnertubeParser.parseHome(post("browse", mapOf("browseId" to "FEmusic_home")) }
+    suspend fun home(): Result<HomeResult> = runCatching { InnertubeParser.parseHome(post("browse", mapOf("browseId" to "FEmusic_home"))) }
     suspend fun search(query: String, filter: SearchFilter? = null): Result<SearchResult> = runCatching {
         val params = mutableMapOf<String, Any?>("query" to query)
         filter?.let { params["params"] = it.value }
         InnertubeParser.parseSearch(post("search", params))
     }
     suspend fun player(videoId: String): Result<PlayerResponse> = runCatching {
-        InnertubeParser.parsePlayer(post("player", mapOf("videoId" to videoId))
+        InnertubeParser.parsePlayer(post("player", mapOf("videoId" to videoId)))
     }
     suspend fun browse(browseId: String, params: String? = null, continuation: String? = null): Result<BrowseResult> = runCatching {
         val map = mutableMapOf<String, Any?>("browseId" to browseId)
@@ -99,7 +99,7 @@ object Innertube {
         InnertubeParser.parseNext(post("next", map))
     }
     suspend fun moodPlaylists(): Result<List<MoodPlaylist>> = runCatching {
-        InnertubeParser.parseMoodPlaylists(post("browse", mapOf("browseId" to "FEmusic_moods_and_genres"))
+        InnertubeParser.parseMoodPlaylists(post("browse", mapOf("browseId" to "FEmusic_moods_and_genres")))
     }
 
     fun resolveUrl(url: String): Pair<ContentType, String>? {

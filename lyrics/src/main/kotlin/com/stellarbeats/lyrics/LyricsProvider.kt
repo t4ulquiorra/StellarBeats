@@ -509,7 +509,7 @@ internal object LrcParser {
 
     fun parse(lrcText: String): LrcParseResult {
         val lines = mutableListOf<LyricsLine>()
-        val metadataBuilder = LrcMetadata.Builder()
+        val metadataBuilder = Builder()
         var errors = 0
 
         for (rawLine in lrcText.lines()) {
@@ -611,7 +611,7 @@ internal object LrcParser {
     }
 
     // Simple builder to avoid @Serializable overhead on internal type
-    private class LrcMetadata.Builder {
+    private class Builder {
         var title: String? = null
         var artist: String? = null
         var album: String? = null
