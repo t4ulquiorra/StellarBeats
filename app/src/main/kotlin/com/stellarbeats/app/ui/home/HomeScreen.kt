@@ -43,6 +43,7 @@ import kotlinx.serialization.json.jsonPrimitive
 fun HomeScreen(onTrackClick: (LocalTrack) -> Unit, viewModel: HomeViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val playerViewModel: PlayerViewModel = hiltViewModel()
+    val playerState by playerViewModel.uiState.collectAsStateWithLifecycle()
     
     when {
         state.isLoading -> {
@@ -71,6 +72,21 @@ fun HomeScreen(onTrackClick: (LocalTrack) -> Unit, viewModel: HomeViewModel = hi
                         modifier = Modifier.padding(horizontal = 24.dp)
                     ) {
                         Text("Play JioSaavn Test Track")
+                    }
+                    
+                    // Show Player Loading / Error states
+                    if (playerState.isLoading) {
+                        Spacer(Modifier.height(16.dp))
+                        CircularProgressIndicator(modifier = Modifier.padding(horizontal = 24.dp))
+                    }
+                    playerState.error?.let { error ->
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            text = "Player Error: $error",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(horizontal = 24.dp)
+                        )
                     }
                     Spacer(Modifier.height(24.dp))
                 }
