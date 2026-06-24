@@ -114,7 +114,7 @@ class MusicRepository(
     fun observeSearchHistory() = searchHistoryDao.observeAll()
     suspend fun clearSearchHistory() = searchHistoryDao.clearAll()
 
-    private fun SearchItem.Song.toLocalTrack(): LocalTrack {
+    internal fun SearchItem.Song.toLocalTrack(): LocalTrack {
         val trackId = "yt:$id"
         return LocalTrack(
             trackId = trackId,
