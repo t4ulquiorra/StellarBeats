@@ -23,7 +23,7 @@ class MusicService : MediaSessionService() {
         super.onCreate()
         
         // This intent launches the MainActivity when the user clicks the notification
-        val sessionActivityIntent = packageManager.getLaunchIntentForSession(packageName)
+        val sessionActivityIntent = packageManager.getLaunchIntentForPackage(packageName)
         val pendingIntent = PendingIntent.getActivity(
             this, 0, sessionActivityIntent, PendingIntent.FLAG_IMMUTABLE
         )
